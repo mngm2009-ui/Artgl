@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بانتظار أرطغرل</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: radial-gradient(circle, #2c3e50 0%, #000000 100%);
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* العنوان العلوي */
+        .main-title {
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: 40px;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            color: #f1c40f;
+            letter-spacing: 2px;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4rem;
+            border-radius: 30px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        #countdown {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            direction: ltr;
+        }
+
+        .time-box {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 15px;
+            min-width: 100px;
+            border-bottom: 4px solid #f1c40f;
+        }
+
+        .number {
+            font-size: 3.5rem;
+            font-weight: 900;
+            display: block;
+            color: #fff;
+        }
+
+        .label {
+            font-size: 1.2rem;
+            color: #f1c40f;
+            font-weight: bold;
+        }
+
+        /* النص السفلي */
+        .sub-text {
+            font-size: 2rem;
+            margin-top: 30px;
+            font-weight: 700;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- العنوان فوق الصفحة -->
+    <h1 class="main-title">أرطغرل لا تطول علينا</h1>
+
+    <div class="container">
+        <div id="countdown">
+            <div class="time-box">
+                <span class="number" id="seconds">00</span>
+                <span class="label">ثانية</span>
+            </div>
+            <div class="time-box">
+                <span class="number" id="minutes">00</span>
+                <span class="label">دقيقة</span>
+            </div>
+            <div class="time-box">
+                <span class="number" id="hours">00</span>
+                <span class="label">ساعة</span>
+            </div>
+            <div class="time-box">
+                <span class="number" id="days">00</span>
+                <span class="label">يوم</span>
+            </div>
+        </div>
+
+        <div class="sub-text">باقي لعودتك لنا</div>
+    </div>
+
+    <script>
+        const targetDate = new Date("June 1, 2026 00:00:00").getTime();
+
+        const timer = setInterval(function() {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById("days").innerHTML = days;
+            document.getElementById("hours").innerHTML = hours;
+            document.getElementById("minutes").innerHTML = minutes;
+            document.getElementById("seconds").innerHTML = seconds;
+
+            if (distance < 0) {
+                clearInterval(timer);
+                document.body.innerHTML = "<h1 style='color:#f1c40f; font-size:4rem;'>نورت المحل يا أرطغرل! ⚔️</h1>";
+            }
+        }, 1000);
+    </script>
+
+</body>
+</html>
