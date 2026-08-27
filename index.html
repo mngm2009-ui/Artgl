@@ -9,8 +9,12 @@
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         h2 { text-align: center; color: #333; }
         label { display: block; margin-top: 15px; font-weight: bold; color: #555; }
-        input { width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
+        input, select { width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
+        .weight-box { display: flex; gap: 10px; }
+        .weight-box input { flex: 2; }
+        .weight-box select { flex: 1; }
         .scan-btn { background: #007bff; margin-top: 5px; color: white; border: none; padding: 10px; border-radius: 5px; width: 100%; cursor: pointer; }
+        .no-barcode-btn { background: #ffc107; margin-top: 5px; color: #333; border: none; padding: 10px; border-radius: 5px; width: 100%; cursor: pointer; font-weight: bold; }
         button.save-btn { width: 100%; background: #28a745; color: white; border: none; padding: 12px; margin-top: 20px; border-radius: 5px; font-size: 18px; cursor: pointer; }
         button.save-btn:hover { background: #218838; }
         #message { text-align: center; margin-top: 15px; font-weight: bold; }
@@ -22,79 +26,142 @@
     <h2>إدخال منتج جديد</h2>
     
     <label for="barcode">كود المنتج (Barcode):</label>
-    <input type="text" id="barcode" placeholder="اكتب الكود أو صوره">
+    <input type="text" id="barcode" placeholder="اتركه فارغاً أو اضغط زر بدون كود">
     
     <button type="button" class="scan-btn" onclick="document.getElementById('barcodeFile').click();">📷 التقاط صورة الباركود</button>
     <input type="file" id="barcodeFile" accept="image/*" capture="environment" style="display:none;" onchange="handleBarcodeInput(this)">
 
+    <button type="button" class="no-barcode-btn" onclick="setNoBarcode()">🏷️ منتج بدون باركود (توليد كود آلي)</button>
+
     <label for="name">اسم المنتج:</label>
-    <input type="text" id="name" placeholder="مثال: قهوة برازيلية">
+    <input type="text" id="name" placeholder="مثال: قهوة / زيت">
+
+    <!-- قائمة الأقسام (يمكنك تعديلها لاحقاً حسب محلك) -->
+    <label for="category">القسم:</label>
+    <select id="category">
+        <option value="مشروبات">مشروبات (Getränke)</option>
+        <option value="معلبات وأغذية">معلبات وأغذية (Food)</option>
+        <option value="حلويات ومقرمشات">حلويات ومقرمشات (Süßwaren)</option>
+        <option value="خضار وفواكه">خضار وفواكه (Obst & Gemüse)</option>
+        <option value="منظفات ومستلزمات">منظفات ومستلزمات (Haushalt)</option>
+        <option value="أخرى">أخرى (Sonstiges)</option>
+    </select>
 
     <label for="price">السعر (€):</label>
     <input type="number" step="0.01" id="price" placeholder="0.00">
 
-    <label for="weight">الوزن / الحجم (Grundpreis):</label>
-    <input type="text" id="weight" placeholder="مثال: 250g أو 1kg">
+    <label>الوزن أو الحجم (Grundpreis):</label>
+    <div class="weight-box">
+        <input type="number" step="any" id="weightValue" placeholder="الرقم (مثال: 250 أو 1)">
+        <select id="weightUnit">
+            <option value="g">g (غرام)</option>
+            <option value="kg">kg (كغ)</option>
+            <option value="ml">ml (مل)</option>
+            <option value="l">l (لتر)</option>
+        </select>
+    </div>
 
-    <button class="save-btn" onclick="saveData()">حفظ في الجداول</button>
+    <label for="quantity">العدد / الكمية في المخزون:</label>
+    <input type="number" id="quantity" placeholder="مثال: 10">
+
+    <button class="save-btn" onclick="checkAndSave()">حفظ في الجداول</button>
     <p id="message"></p>
 </div>
 
 <script>
-    // رابط SheetDB الخاص بك
     const sheetDB_URL = 'https://sheetdb.io/api/v1/ppg66574vabjm';
 
     function handleBarcodeInput(input) {
         if (input.files && input.files[0]) {
-            // محاكاة وضع رقم باركود مؤقت عند التصوير (يمكن تعديله يدوياً)
             document.getElementById('barcode').value = "400" + Math.floor(100000000 + Math.random() * 900000000);
-            alert('تم التقاط الصورة بنجاح! تأكد من رقم الكود.');
+            alert('تم التقاط الصورة بنجاح!');
         }
     }
 
-    function saveData() {
-        const barcode = document.getElementById('barcode').value;
-        const name = document.getElementById('name').value;
-        const price = document.getElementById('price').value;
-        const weight = document.getElementById('weight').value;
+    function setNoBarcode() {
+        const randomCode = "LOCAL-" + Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('barcode').value = randomCode;
+        alert('تم تعيين كود آلي للمنتج: ' + randomCode);
+    }
+
+    function checkAndSave() {
+        let barcode = document.getElementById('barcode').value.trim();
+        const name = document.getElementById('name').value.trim();
+        const category = document.getElementById('category').value;
+        const price = document.getElementById('price').value.trim();
+        
+        const val = document.getElementById('weightValue').value.trim();
+        const unit = document.getElementById('weightUnit').value;
+        const weight = val ? val + unit : ''; 
+
+        const quantity = document.getElementById('quantity').value.trim();
         const msg = document.getElementById('message');
 
-        if(!barcode || !name || !price) {
+        if(!barcode) {
+            barcode = "NO-BARCODE-" + Math.floor(1000 + Math.random() * 9000);
+        }
+
+        if(!name || !price) {
             msg.style.color = 'red';
-            msg.innerText = 'الرجاء تعبئة الحقول الأساسية!';
+            msg.innerText = 'الرجاء إدخال اسم المنتج والسعر على الأقل!';
             return;
         }
 
         msg.style.color = 'blue';
-        msg.innerText = 'جاري الحفظ...';
+        msg.innerText = 'جاري التحقق والحفظ...';
 
-        const data = {
-            data: [
-                { barcode: barcode, name: name, price: price, weight: weight }
-            ]
-        };
-
-        fetch(sheetDB_URL, {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
+        fetch(`${sheetDB_URL}/search?barcode=${encodeURIComponent(barcode)}`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
         })
         .then(response => response.json())
-        .then(data => {
-            msg.style.color = 'green';
-            msg.innerText = 'تم الحفظ بنجاح في الجدول! ✅';
-            document.getElementById('barcode').value = '';
-            document.getElementById('name').value = '';
-            document.getElementById('price').value = '';
-            document.getElementById('weight').value = '';
+        .then(existingData => {
+            if (existingData && existingData.length > 0) {
+                msg.style.color = 'orange';
+                msg.innerText = '⚠️ هذا الكود موجود مسبقاً في النظام!';
+                return;
+            }
+
+            const data = {
+                data: [
+                    { 
+                        barcode: barcode, 
+                        name: name, 
+                        category: category,
+                        price: price, 
+                        weight: weight, 
+                        quantity: quantity 
+                    }
+                ]
+            };
+
+            fetch(sheetDB_URL, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(res => {
+                msg.style.color = 'green';
+                msg.innerText = 'تم الحفظ بنجاح في الجدول! ✅';
+                document.getElementById('barcode').value = '';
+                document.getElementById('name').value = '';
+                document.getElementById('price').value = '';
+                document.getElementById('weightValue').value = '';
+                document.getElementById('quantity').value = '';
+            })
+            .catch(error => {
+                msg.style.color = 'red';
+                msg.innerText = 'حدث خطأ أثناء الحفظ ❌';
+            });
+
         })
         .catch(error => {
             msg.style.color = 'red';
-            msg.innerText = 'حدث خطأ، حاول مرة أخرى ❌';
-            console.error('Error:', error);
+            msg.innerText = 'خطأ في الاتصال بالقاعدة ❌';
         });
     }
 </script>
