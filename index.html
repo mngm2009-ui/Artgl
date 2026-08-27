@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إدارة منتجات المحل</title>
+    <!-- استدعاء أحدث وأقوى نسخة من مكتبة الماسح الضوئي الحي -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         body { font-family: Tahoma, sans-serif; background: #f4f4f9; padding: 20px; margin: 0; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -13,11 +15,13 @@
         .weight-box { display: flex; gap: 10px; }
         .weight-box input { flex: 2; }
         .weight-box select { flex: 1; }
-        .scan-btn { background: #007bff; margin-top: 5px; color: white; border: none; padding: 12px; border-radius: 5px; width: 100%; cursor: pointer; font-size: 16px; font-weight: bold; }
-        .no-barcode-btn { background: #ffc107; margin-top: 5px; color: #333; border: none; padding: 10px; border-radius: 5px; width: 100%; cursor: pointer; font-weight: bold; }
+        .scan-btn { background: #007bff; margin-top: 5px; color: white; border: none; padding: 14px; border-radius: 5px; width: 100%; cursor: pointer; font-size: 17px; font-weight: bold; }
+        .no-barcode-btn { background: #ffc107; margin-top: 8px; color: #333; border: none; padding: 10px; border-radius: 5px; width: 100%; cursor: pointer; font-weight: bold; }
         button.save-btn { width: 100%; background: #28a745; color: white; border: none; padding: 12px; margin-top: 20px; border-radius: 5px; font-size: 18px; cursor: pointer; font-weight: bold; }
         button.save-btn:hover { background: #218838; }
-        #message { text-align: center; margin-top: 15px; font-weight: bold; }
+        
+        #reader { width: 100%; margin-top: 10px; display: none; border-radius: 8px; overflow: hidden; border: 3px solid #007bff; background: #000; }
+        #message { text-align: center; margin-top: 15px; font-weight: bold; font-size: 15px; }
     </style>
 </head>
 <body>
@@ -26,11 +30,11 @@
     <h2>إدخال منتج جديد</h2>
     
     <label for="barcode">كود المنتج (Barcode):</label>
-    <input type="text" id="barcode" placeholder="اضغط زر التصوير لسحب الرقم تلقائياً">
+    <input type="text" id="barcode" placeholder="سيتم سحب الرقم تلقائياً فور توجيه الكاميرا">
     
-    <!-- زر تصوير مباشر يعتمد على نظام الجوال لقراءة الباركود بدقة -->
-    <button type="button" class="scan-btn" onclick="document.getElementById('realScanner').click();">📷 تصوير وقراءة الباركود فوراً</button>
-    <input type="file" id="realScanner" accept="image/*" capture="environment" style="display:none;" onchange="processBarcodeImage(this)">
+    <!-- نافذة عرض الكاميرا الحية -->
+    <div id="reader"></div>
+    <button type="button" class="scan-btn" onclick="startScanner()">📷 فتح الكاميرا للمسح التلقائي</button>
 
     <button type="button" class="no-barcode-btn" onclick="setNoBarcode()">🏷️ منتج بدون باركود (توليد كود آلي)</button>
 
@@ -68,47 +72,75 @@
     <p id="message"></p>
 </div>
 
-<!-- استخدام مكتبة Zxing الذكية لتحليل صورة الباركود واستخراج رقمه الحقيقي بدقة تامة -->
-<script src="https://unpkg.com/@zxing/library@latest"></script>
 <script>
     const sheetDB_URL = 'https://sheetdb.io/api/v1/ppg66574vabjm';
+    let html5QrCode = null;
 
-    function processBarcodeImage(input) {
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
-            const msg = document.getElementById('message');
-            msg.style.color = 'blue';
-            msg.innerText = 'جاري قراءة الباركود من الصورة...';
+    function startScanner() {
+        const readerDiv = document.getElementById('reader');
+        const msg = document.getElementById('message');
+        
+        readerDiv.style.display = 'block';
+        msg.style.color = 'blue';
+        msg.innerText = '🔍 جاري تفعيل الماسح الضوئي التلقائي...';
 
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const img = new Image();
-                img.onload = function () {
-                    const codeReader = new ZXing.BrowserBarcodeReader();
-                    codeReader.decodeFromImage(img)
-                        .then(result => {
-                            document.getElementById('barcode').value = result.text;
-                            msg.style.color = 'green';
-                            msg.innerText = 'تمت قراءة الكود بنجاح! ✅';
-                        })
-                        .catch(err => {
-                            msg.style.color = 'red';
-                            msg.innerText = 'لم يتم قراءة الباركود بوضوح، حاول مرة أخرى أو اكتبه يدوياً ❌';
-                            console.error(err);
-                        });
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("reader");
         }
+
+        const config = {
+            fps: 20, // سرعة عالية جداً لالتقاط الأكواد أثناء الحركة
+            qrbox: { width: 280, height: 120 }, // إطار مخصص للأكواد التجارية العريضة
+            aspectRatio: 1.0,
+            formatsToSupport: [
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.UPC_A
+            ]
+        };
+
+        html5QrCode.start(
+            { facingMode: "environment" }, // تشغيل الكاميرا الخلفية تلقائياً
+            config,
+            (decodedText, decodedResult) => {
+                // نجاح القراءة الفورية بنسبة 100%
+                document.getElementById('barcode').value = decodedText;
+                msg.style.color = 'green';
+                msg.innerText = '✅ تم قراءة الكود بدقة وإغلاق الكاميرا!';
+
+                // إيقاف الكاميرا فوراً وإخفاء النافذة
+                html5QrCode.stop().then(() => {
+                    readerDiv.style.display = 'none';
+                }).catch(err => {
+                    console.error("Failed to stop scanner.", err);
+                });
+            },
+            (errorMessage) => {
+                // تجاهل أخطاء عدم ظهور الباركود حتى يتم التركيز عليه
+            }
+        ).catch(err => {
+            msg.style.color = 'red';
+            msg.innerText = '❌ يجيب السماح للمتصفح بالوصول إلى الكاميرا';
+            readerDiv.style.display = 'none';
+        });
     }
 
     function setNoBarcode() {
+        if(html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().catch(e => {});
+        }
+        document.getElementById('reader').style.display = 'none';
         const randomCode = "LOCAL-" + Math.floor(1000 + Math.random() * 9000);
         document.getElementById('barcode').value = randomCode;
     }
 
     function checkAndSave() {
+        if(html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().catch(e => {});
+        }
+        document.getElementById('reader').style.display = 'none';
+
         let barcode = document.getElementById('barcode').value.trim();
         const name = document.getElementById('name').value.trim();
         const category = document.getElementById('category').value;
