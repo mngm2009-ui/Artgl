@@ -4,48 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إدارة منتجات المحل</title>
-    <!-- مكتبة قراءة الباركود -->
+    <!-- مكتبة قراءة الباركود من الكاميرا والصور -->
     <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
         body { font-family: Tahoma, sans-serif; background: #f4f4f9; padding: 20px; margin: 0; }
-        .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #333; }
-        label { display: block; margin-top: 15px; font-weight: bold; color: #555; }
-        input, select { width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
-        .weight-box { display: flex; gap: 10px; }
+        .container { max-width: 420px; margin: auto; background: white; padding: 22px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        h2 { text-align: center; color: #1e293b; margin-top: 0; }
+        label { display: block; margin-top: 14px; font-weight: bold; color: #475569; font-size: 14px; }
+        input, select { width: 100%; padding: 11px; margin-top: 5px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 15px; outline: none; }
+        input:focus, select:focus { border-color: #0284c7; box-shadow: 0 0 0 2px rgba(2,132,199,0.2); }
+        
+        .weight-box { display: flex; gap: 8px; }
         .weight-box input { flex: 2; }
         .weight-box select { flex: 1; }
         
-        .scan-btn { background: #007bff; margin-top: 5px; color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; cursor: pointer; font-size: 18px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,123,255,0.2); }
-        .scan-btn:active { background: #0056b3; }
+        .scan-btn { background: #0284c7; margin-top: 8px; color: white; border: none; padding: 13px; border-radius: 8px; width: 100%; cursor: pointer; font-size: 16px; font-weight: bold; }
+        .scan-btn:active { background: #0369a1; }
 
-        .no-barcode-btn { background: #ffc107; margin-top: 10px; color: #333; border: none; padding: 10px; border-radius: 5px; width: 100%; cursor: pointer; font-weight: bold; }
-        button.save-btn { width: 100%; background: #28a745; color: white; border: none; padding: 12px; margin-top: 20px; border-radius: 5px; font-size: 18px; cursor: pointer; font-weight: bold; }
-        button.save-btn:hover { background: #218838; }
+        .no-barcode-btn { background: #e2e8f0; margin-top: 8px; color: #334155; border: none; padding: 9px; border-radius: 6px; width: 100%; cursor: pointer; font-weight: bold; font-size: 13px; }
         
-        #message { text-align: center; margin-top: 15px; font-weight: bold; font-size: 16px; }
+        button.save-btn { width: 100%; background: #16a34a; color: white; border: none; padding: 13px; margin-top: 20px; border-radius: 8px; font-size: 17px; cursor: pointer; font-weight: bold; }
+        button.save-btn:active { background: #15803d; }
         
-        /* حاوية قص الصورة وتحديد الباركود */
-        #cropContainer { display: none; margin-top: 15px; text-align: center; background: #222; padding: 10px; border-radius: 8px; }
-        #previewCanvas { max-width: 100%; border: 2px dashed #007bff; cursor: crosshair; display: block; margin: 0 auto; touch-action: none; }
-        .crop-instructions { color: #fff; font-size: 13px; margin-bottom: 8px; }
-        .confirm-crop-btn { background: #28a745; color: white; border: none; padding: 10px; width: 100%; margin-top: 8px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        #message { text-align: center; margin-top: 16px; font-weight: bold; font-size: 15px; min-height: 24px; }
+        
+        #cropContainer { display: none; margin-top: 15px; text-align: center; background: #0f172a; padding: 10px; border-radius: 8px; }
+        #previewCanvas { max-width: 100%; border: 2px dashed #38bdf8; cursor: crosshair; display: block; margin: 0 auto; touch-action: none; }
+        .crop-instructions { color: #f8fafc; font-size: 13px; margin-bottom: 8px; }
+        .confirm-crop-btn { background: #16a34a; color: white; border: none; padding: 10px; width: 100%; margin-top: 8px; border-radius: 6px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>إدخال وإدارة المنتجات</h2>
+    <h2>إدارة وتعديل المنتجات</h2>
     
     <label for="barcode">كود المنتج (Barcode):</label>
-    <input type="text" id="barcode" placeholder="سيظهر رقم الباركود هنا تلقائياً">
+    <input type="text" id="barcode" placeholder="امسح أو اكتب الباركود...">
     
     <button type="button" class="scan-btn" onclick="document.getElementById('nativeCamera').click();">📸 التقاط صورة الباركود</button>
     <input type="file" id="nativeCamera" accept="image/*" capture="environment" style="display:none;" onchange="loadCropper(this)">
 
-    <!-- مربع تحديد وقص الباركود بدقة -->
     <div id="cropContainer">
-        <div class="crop-instructions">👉 اسحب بإصبعك وحدد "الباركود فقط" داخل الصورة:</div>
+        <div class="crop-instructions">👉 اسحب بإصبعك وحدد خطوط الباركود داخل الصورة:</div>
         <canvas id="previewCanvas"></canvas>
         <button type="button" class="confirm-crop-btn" onclick="readCroppedBarcode()">✔ قراءة الباركود من الجزء المحدد</button>
     </div>
@@ -53,7 +54,7 @@
     <button type="button" class="no-barcode-btn" onclick="setNoBarcode()">🏷️ منتج بدون باركود (توليد كود آلي)</button>
 
     <label for="name">اسم المنتج:</label>
-    <input type="text" id="name" placeholder="مثال: مياه معدنية / قهوة">
+    <input type="text" id="name" placeholder="مثال: سجق أصابع / مياه معدنية">
 
     <label for="category">القسم:</label>
     <select id="category">
@@ -65,32 +66,33 @@
         <option value="أخرى">أخرى (Sonstiges)</option>
     </select>
 
-    <label for="price">السعر الأساسي (€):</label>
-    <input type="number" step="0.01" id="price" placeholder="0.00">
+    <label for="price">السعر الأساسي للمنتج (€):</label>
+    <input type="number" step="0.01" id="price" placeholder="مثال: 4.00">
 
-    <label for="offer">سعر العرض (€) - اختياري:</label>
-    <input type="number" step="0.01" id="offer" placeholder="اتركه فارغاً إن لم يكن هناك عرض">
+    <label for="offer">سعر العرض (€) - اتركه فارغاً إن لم يكن هناك عرض:</label>
+    <input type="number" step="0.01" id="offer" placeholder="مثال: 3.49">
 
     <label>الوزن أو الحجم (Grundpreis):</label>
     <div class="weight-box">
-        <input type="number" step="any" id="weightValue" placeholder="الرقم (مثال: 1.5 أو 500)">
+        <input type="text" id="weightValue" placeholder="مثال: 1 أو 500">
         <select id="weightUnit">
+            <option value="kg">kg (كغ)</option>
+            <option value="g">g (غرام)</option>
             <option value="l">l (لتر)</option>
             <option value="ml">ml (مل)</option>
-            <option value="g">g (غرام)</option>
-            <option value="kg">kg (كغ)</option>
+            <option value="قطعة">Stück (قطعة)</option>
         </select>
     </div>
 
-    <label for="quantity">العدد / الكمية في المخزون:</label>
-    <input type="number" id="quantity" placeholder="مثال: 12">
+    <label for="quantity">الكمية في المخزون:</label>
+    <input type="number" id="quantity" placeholder="مثال: 20">
 
-    <button class="save-btn" onclick="checkAndSave()">حفظ في الجداول</button>
+    <button class="save-btn" onclick="checkAndSave()">💾 حفظ وتحديث في الشيت</button>
     <p id="message"></p>
 </div>
 
 <script>
-    // رابط Google Apps Script الموحد
+    // رابط السكربت الموحد الخاص بك
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz6VkxJteGJAeQaR5oTqdYValeCbxP62sr71HzkbcYy9kviVPb3cdK4-fdCgb0uibIHIA/exec";
 
     let loadedImage = new Image();
@@ -144,7 +146,7 @@
         ctx.clearRect(x, y, w, h);
         ctx.drawImage(loadedImage, x / imgScale, y / imgScale, w / imgScale, h / imgScale, x, y, w, h);
 
-        ctx.strokeStyle = '#007bff';
+        ctx.strokeStyle = '#38bdf8';
         ctx.lineWidth = 3;
         ctx.strokeRect(x, y, w, h);
     }
@@ -171,8 +173,8 @@
 
     function readCroppedBarcode() {
         const msg = document.getElementById('message');
-        msg.style.color = '#007bff';
-        msg.innerText = '⚙️ جاري قراءة الباركود بدقة من الجزء المحدد...';
+        msg.style.color = '#0284c7';
+        msg.innerText = '⚙️ جاري قراءة الباركود بدقة...';
 
         let x = Math.min(startX, endX) / imgScale;
         let y = Math.min(startY, endY) / imgScale;
@@ -189,13 +191,13 @@
         codeReader.decodeFromImage(cropCanvas)
             .then(result => {
                 document.getElementById('barcode').value = result.text;
-                msg.style.color = 'green';
+                msg.style.color = '#16a34a';
                 msg.innerText = '✅ تم قراءة الكود بنجاح!';
                 document.getElementById('cropContainer').style.display = 'none';
             })
             .catch(err => {
-                msg.style.color = 'red';
-                msg.innerText = '❌ لم يتم العثور على باركود بداخل المربع، تأكد من ضبطه فوق خطوط الباركود بدقة';
+                msg.style.color = '#ef4444';
+                msg.innerText = '❌ لم يتم العثور على باركود بداخل التحديد، اضبط المربع بدقة';
             });
     }
 
@@ -214,7 +216,7 @@
         
         const val = document.getElementById('weightValue').value.trim();
         const unit = document.getElementById('weightUnit').value;
-        const weight = val ? val + " " + unit : ''; 
+        const weight = val ? (val + " " + unit) : ''; 
 
         const quantity = document.getElementById('quantity').value.trim();
         const msg = document.getElementById('message');
@@ -224,13 +226,13 @@
         }
 
         if(!name || !price) {
-            msg.style.color = 'red';
-            msg.innerText = 'الرجاء إدخال اسم المنتج والسعر على الأقل!';
+            msg.style.color = '#ef4444';
+            msg.innerText = '⚠️ الرجاء إدخال اسم المنتج والسعر على الأقل!';
             return;
         }
 
-        msg.style.color = 'blue';
-        msg.innerText = 'جاري الإرسال والتحديث في Google Sheets...';
+        msg.style.color = '#0284c7';
+        msg.innerText = '⏳ جاري الحفظ والتعديل في Google Sheets...';
 
         const payload = {
             action: 'update',
@@ -238,33 +240,34 @@
             name: name,
             category: category,
             price: price,
-            offer: offer || '',
+            offer: offer,
             size: weight,
             quantity: quantity || 0
         };
 
-        // إرسال البيانات مباشرة للسكربت بدون وسيط
         fetch(SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: JSON.stringify(payload)
         })
         .then(() => {
-            msg.style.color = 'green';
-            msg.innerText = 'تم الحفظ والتحديث في الجدول بنجاح! ✅';
+            msg.style.color = '#16a34a';
+            msg.innerText = '✅ تم تعديل وحفظ المنتج بنجاح في الشيت!';
             
-            // تفريغ الحقول
-            document.getElementById('barcode').value = '';
-            document.getElementById('name').value = '';
-            document.getElementById('price').value = '';
-            document.getElementById('offer').value = '';
-            document.getElementById('weightValue').value = '';
-            document.getElementById('quantity').value = '';
+            setTimeout(() => {
+                document.getElementById('barcode').value = '';
+                document.getElementById('name').value = '';
+                document.getElementById('price').value = '';
+                document.getElementById('offer').value = '';
+                document.getElementById('weightValue').value = '';
+                document.getElementById('quantity').value = '';
+                msg.innerText = '';
+            }, 1500);
         })
         .catch(error => {
-            msg.style.color = 'red';
-            msg.innerText = 'حدث خطأ أثناء الحفظ ❌';
+            msg.style.color = '#ef4444';
+            msg.innerText = 'حدث خطأ أثناء الإرسال ❌';
         });
     }
 </script>
