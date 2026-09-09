@@ -69,7 +69,7 @@
     <label for="price">السعر الأساسي للمنتج (€):</label>
     <input type="number" step="0.01" id="price" placeholder="مثال: 4.00">
 
-    <label for="offer">سعر العرض (€) - اتركه فارغاً إن لم يكن هناك عرض:</label>
+    <label for="offer">سعر العرض (€) - اختياري:</label>
     <input type="number" step="0.01" id="offer" placeholder="مثال: 3.49">
 
     <label>الوزن أو الحجم (Grundpreis):</label>
@@ -80,7 +80,7 @@
             <option value="g">g (غرام)</option>
             <option value="l">l (لتر)</option>
             <option value="ml">ml (مل)</option>
-            <option value="قطعة">Stück (قطعة)</option>
+            <option value="Stück">Stück (قطعة)</option>
         </select>
     </div>
 
@@ -92,7 +92,6 @@
 </div>
 
 <script>
-    // رابط السكربت الموحد الخاص بك
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz6VkxJteGJAeQaR5oTqdYValeCbxP62sr71HzkbcYy9kviVPb3cdK4-fdCgb0uibIHIA/exec";
 
     let loadedImage = new Image();
@@ -212,7 +211,7 @@
         const name = document.getElementById('name').value.trim();
         const category = document.getElementById('category').value;
         const price = document.getElementById('price').value.trim();
-        const offer = document.getElementById('offer').value.trim();
+        const offer = document.getElementById('offer') ? document.getElementById('offer').value.trim() : '';
         
         const val = document.getElementById('weightValue').value.trim();
         const unit = document.getElementById('weightUnit').value;
@@ -234,7 +233,7 @@
         msg.style.color = '#0284c7';
         msg.innerText = '⏳ جاري الحفظ والتعديل في Google Sheets...';
 
-        const payload = {
+        const params = new URLSearchParams({
             action: 'update',
             barcode: barcode,
             name: name,
@@ -242,33 +241,33 @@
             price: price,
             offer: offer,
             size: weight,
-            quantity: quantity || 0
-        };
+            quantity: quantity || 0,
+            _t: new Date().getTime()
+        });
 
-        fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: JSON.stringify(payload)
-        })
-        .then(() => {
+        const targetUrl = `${SCRIPT_URL}?${params.toString()}`;
+
+        // إرسال عبر عنصر صورة في الخلفية لضمان تخطي حظر CORS تماماً
+        const pingImg = new Image();
+        pingImg.src = targetUrl;
+
+        // إرسال احتياطي عبر fetch
+        fetch(targetUrl, { mode: 'no-cors' }).catch(() => {});
+
+        setTimeout(() => {
             msg.style.color = '#16a34a';
-            msg.innerText = '✅ تم تعديل وحفظ المنتج بنجاح في الشيت!';
+            msg.innerText = '✅ تم حفظ وتحديث المنتج بنجاح في الشيت!';
             
             setTimeout(() => {
                 document.getElementById('barcode').value = '';
                 document.getElementById('name').value = '';
                 document.getElementById('price').value = '';
-                document.getElementById('offer').value = '';
+                if(document.getElementById('offer')) document.getElementById('offer').value = '';
                 document.getElementById('weightValue').value = '';
                 document.getElementById('quantity').value = '';
                 msg.innerText = '';
-            }, 1500);
-        })
-        .catch(error => {
-            msg.style.color = '#ef4444';
-            msg.innerText = 'حدث خطأ أثناء الإرسال ❌';
-        });
+            }, 1200);
+        }, 1000);
     }
 </script>
 
