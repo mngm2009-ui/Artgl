@@ -35,7 +35,7 @@
 <body>
 
 <div class="container">
-    <h2>إدخال منتج جديد</h2>
+    <h2>إدخال وإدارة المنتجات</h2>
     
     <label for="barcode">كود المنتج (Barcode):</label>
     <input type="text" id="barcode" placeholder="سيظهر رقم الباركود هنا تلقائياً">
@@ -65,8 +65,11 @@
         <option value="أخرى">أخرى (Sonstiges)</option>
     </select>
 
-    <label for="price">السعر (€):</label>
+    <label for="price">السعر الأساسي (€):</label>
     <input type="number" step="0.01" id="price" placeholder="0.00">
+
+    <label for="offer">سعر العرض (€) - اختياري:</label>
+    <input type="number" step="0.01" id="offer" placeholder="اتركه فارغاً إن لم يكن هناك عرض">
 
     <label>الوزن أو الحجم (Grundpreis):</label>
     <div class="weight-box">
@@ -87,7 +90,9 @@
 </div>
 
 <script>
-    const sheetDB_URL = 'https://sheetdb.io/api/v1/ppg66574vabjm';
+    // رابط Google Apps Script الموحد
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz6VkxJteGJAeQaR5oTqdYValeCbxP62sr71HzkbcYy9kviVPb3cdK4-fdCgb0uibIHIA/exec";
+
     let loadedImage = new Image();
     let canvas, ctx;
     let startX, startY, endX, endY, isDrawing = false;
@@ -109,7 +114,6 @@
 
                     ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
 
-                    // افتراضياً تحديد منتصف الصورة
                     startX = canvas.width * 0.15;
                     startY = canvas.height * 0.35;
                     endX = canvas.width * 0.85;
@@ -206,10 +210,11 @@
         const name = document.getElementById('name').value.trim();
         const category = document.getElementById('category').value;
         const price = document.getElementById('price').value.trim();
+        const offer = document.getElementById('offer').value.trim();
         
         const val = document.getElementById('weightValue').value.trim();
         const unit = document.getElementById('weightUnit').value;
-        const weight = val ? val + unit : ''; 
+        const weight = val ? val + " " + unit : ''; 
 
         const quantity = document.getElementById('quantity').value.trim();
         const msg = document.getElementById('message');
@@ -225,60 +230,41 @@
         }
 
         msg.style.color = 'blue';
-        msg.innerText = 'جاري التحقق والحفظ...';
+        msg.innerText = 'جاري الإرسال والتحديث في Google Sheets...';
 
-        fetch(`${sheetDB_URL}/search?barcode=${encodeURIComponent(barcode)}`, {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' }
+        const payload = {
+            action: 'update',
+            barcode: barcode,
+            name: name,
+            category: category,
+            price: price,
+            offer: offer || '',
+            size: weight,
+            quantity: quantity || 0
+        };
+
+        // إرسال البيانات مباشرة للسكربت بدون وسيط
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
         })
-        .then(response => response.json())
-        .then(existingData => {
-            if (existingData && existingData.length > 0) {
-                msg.style.color = 'orange';
-                msg.innerText = '⚠️ هذا الكود موجود مسبقاً في النظام!';
-                return;
-            }
-
-            const data = {
-                data: [
-                    { 
-                        barcode: barcode, 
-                        name: name, 
-                        category: category,
-                        price: price, 
-                        weight: weight, 
-                        quantity: quantity 
-                    }
-                ]
-            };
-
-            fetch(sheetDB_URL, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(res => {
-                msg.style.color = 'green';
-                msg.innerText = 'تم الحفظ بنجاح في الجدول! ✅';
-                document.getElementById('barcode').value = '';
-                document.getElementById('name').value = '';
-                document.getElementById('price').value = '';
-                document.getElementById('weightValue').value = '';
-                document.getElementById('quantity').value = '';
-            })
-            .catch(error => {
-                msg.style.color = 'red';
-                msg.innerText = 'حدث خطأ أثناء الحفظ ❌';
-            });
-
+        .then(() => {
+            msg.style.color = 'green';
+            msg.innerText = 'تم الحفظ والتحديث في الجدول بنجاح! ✅';
+            
+            // تفريغ الحقول
+            document.getElementById('barcode').value = '';
+            document.getElementById('name').value = '';
+            document.getElementById('price').value = '';
+            document.getElementById('offer').value = '';
+            document.getElementById('weightValue').value = '';
+            document.getElementById('quantity').value = '';
         })
         .catch(error => {
             msg.style.color = 'red';
-            msg.innerText = 'خطأ في الاتصال بالقاعدة ❌';
+            msg.innerText = 'حدث خطأ أثناء الحفظ ❌';
         });
     }
 </script>
